@@ -8,24 +8,25 @@ import Component from '../../component.js';
  * Also can be used to create space between elements when necessary.
  *
  * @extends Component
+ * @class Spacer
  */
 class Spacer extends Component {
 
- /**
-  * Builds the default DOM `className`.
-  *
-  * @return {string}
-  *         The DOM `className` for this object.
-  */
+  /**
+   * Allow sub components to stack CSS class names
+   *
+   * @return {String} The constructed class name
+   * @method buildCSSClass
+   */
   buildCSSClass() {
     return `vjs-spacer ${super.buildCSSClass()}`;
   }
 
   /**
-   * Create the `Component`'s DOM element
+   * Create the component's DOM element
    *
    * @return {Element}
-   *         The element that was created.
+   * @method createEl
    */
   createEl() {
     return super.createEl('div', {

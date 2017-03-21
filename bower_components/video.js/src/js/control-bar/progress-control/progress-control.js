@@ -2,23 +2,25 @@
  * @file progress-control.js
  */
 import Component from '../../component.js';
-
-import './seek-bar.js';
-import './mouse-time-display.js';
+import SeekBar from './seek-bar.js';
+import MouseTimeDisplay from './mouse-time-display.js';
 
 /**
  * The Progress Control component contains the seek bar, load progress,
- * and play progress.
+ * and play progress
  *
+ * @param {Player|Object} player
+ * @param {Object=} options
  * @extends Component
+ * @class ProgressControl
  */
 class ProgressControl extends Component {
 
   /**
-   * Create the `Component`'s DOM element
+   * Create the component's DOM element
    *
    * @return {Element}
-   *         The element that was created.
+   * @method createEl
    */
   createEl() {
     return super.createEl('div', {
@@ -27,12 +29,6 @@ class ProgressControl extends Component {
   }
 }
 
-/**
- * Default options for `ProgressControl`
- *
- * @type {Object}
- * @private
- */
 ProgressControl.prototype.options_ = {
   children: [
     'seekBar'

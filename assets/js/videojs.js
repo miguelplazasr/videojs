@@ -10,17 +10,43 @@
     //<link href="http://vjs.zencdn.net/5.18.4/video-js.css" rel="stylesheet">
 
 
-    /* Adiciona el css de videoJs al HEAD del documento */
+    /* Adiciona los css de videoJs al HEAD del documento */
     var cssvideojs = document.createElement('link');
     cssvideojs.rel = 'stylesheet';
     cssvideojs.href = './bower_components/video.js/dist/video-js.css';
     head.appendChild(cssvideojs);
 
+    var cssvideojsads = document.createElement('link');
+    cssvideojsads.rel = 'stylesheet';
+    cssvideojsads.href = './bower_components/videojs-contrib-ads/src/videojs.ads.css';
+    head.appendChild(cssvideojsads);
+
+    var cssvideojsima = document.createElement('link');
+    cssvideojsima.rel = 'stylesheet';
+    cssvideojsima.href = './bower_components/videojs-ima/src/videojs.ima.css';
+    head.appendChild(cssvideojsima);
+
+    /* Adiciona los js de videoJs al HEAD del documento */
     var jsvideojs = document.createElement('script');
     jsvideojs.type = 'text/javascript';
     jsvideojs.src = './bower_components/video.js/dist/video.js';
     //jsvideojs.src = location.protocol + //vjs.zencdn.net/ie8/1.1.2/videojs-ie8.min.js';
-    head.appendChild(jsvideojs);
+    document.body.appendChild(jsvideojs);
+
+    var ima3 = document.createElement('script');
+    ima3.type = 'text/javascript';
+    ima3.src = '//imasdk.googleapis.com/js/sdkloader/ima3.js';
+    document.body.appendChild(ima3);
+
+    var jsvideojsads = document.createElement('script');
+    jsvideojsads.type = 'text/javascript';
+    jsvideojsads.src = './bower_components/videojs-contrib-ads/src/videojs.ads.js';
+    document.body.appendChild(jsvideojsads);
+
+    var jsvideojsima = document.createElement('script');
+    jsvideojsima.type = 'text/javascript';
+    jsvideojsima.src = './bower_components/videojs-ima/src/videojs.ima.js';
+    document.body.appendChild(jsvideojsima);
 
 
     var videos = document.getElementsByClassName("video-cimacast");
@@ -51,10 +77,7 @@
      */
     function videoAuthorized(video_id) {
 
-        console.log(document.domain);
-
         var url = "http://localhost:8000/video-data/" + video_id + '?domain=' + document.domain;
-
         var http_req = new XMLHttpRequest();
 
         http_req.onreadystatechange = function () {
@@ -106,19 +129,15 @@
         video_request.onreadystatechange = function () {
 
             if(video_request.readyState == 4 ) {
+
+
                 var data = JSON.parse(video_request.responseText);
-                var video = document.getElementsByName("video");
 
                 console.log(data);
-                console.log(video);
 
-                var cimaPlayer = videojs("video-" + data.video.token);
+                videojsPlayer("video-" + data.video.token, data.urlAds, data.video.video);
 
-                cimaPlayer.src(data.video.video);
 
-                cimaPlayer.ready(function() {
-                    var lengthOfVideo = cimaPlayer.duration();
-                });
             }
         } ;
 
@@ -127,9 +146,33 @@
         
     }
     
-    function videojsPlayer(video_id) {
+    function videojsPlayer(id, adsUrl, videoUrl ) {
 
-        var cimaPlayer = videojs(video_id);
+        var cimaPlayer = videojs(id);
+
+        cimaPlayer.src(videoUrl);
+
+        var options = {
+            id: id,
+            adTagUrl: 'http://pubads.g.doubleclick.net/gampad/ads?sz=640x480&' +
+        'iu=/124319096/external/ad_rule_samples&ciu_szs=300x250&ad_rule=1&' +
+        'impl=s&gdfp_req=1&env=vp&output=xml_vmap1&unviewed_position_start=1&' +
+        'cust_params=sample_ar%3Dpremidpostpod%26deployment%3Dgmf-js&cmsid=496&' +
+        'vid=short_onecue&correlator='
+        };
+
+
+        // This must be called before player.play() below.
+        cimaPlayer.ima(options);
+        cimaPlayer.ima.requestAds();
+        // On mobile devices, you must call initializeAdDisplayContainer as the result
+        // of a user action (e.g. button click). If you do not make this call, the SDK
+        // will make it for you, but not as the result of a user action. For more info
+        // see our examples, all of which are set up to work on mobile devices.
+        // player.ima.initializeAdDisplayContainer();
+
+        // This must be called after player.ima(...) above.
+        cimaPlayer.play();
 
     }
 

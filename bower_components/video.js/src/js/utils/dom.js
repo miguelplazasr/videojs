@@ -1,111 +1,62 @@
 /**
  * @file dom.js
- * @module dom
  */
 import document from 'global/document';
 import window from 'global/window';
-import * as Guid from './guid.js';
+import  * as Guid from './guid.js';
 import log from './log.js';
 import tsml from 'tsml';
-import {isObject} from './obj';
 
 /**
  * Detect if a value is a string with any non-whitespace characters.
  *
- * @param {string} str
- *        The string to check
- *
- * @return {boolean}
- *         - True if the string is non-blank
- *         - False otherwise
- *
+ * @param  {String} str
+ * @return {Boolean}
  */
 function isNonBlankString(str) {
-  return typeof str === 'string' && (/\S/).test(str);
+  return typeof str === 'string' && /\S/.test(str);
 }
 
 /**
  * Throws an error if the passed string has whitespace. This is used by
  * class methods to be relatively consistent with the classList API.
  *
- * @param {string} str
- *         The string to check for whitespace.
- *
- * @throws {Error}
- *         Throws an error if there is whitespace in the string.
- *
+ * @param  {String} str
+ * @return {Boolean}
  */
 function throwIfWhitespace(str) {
-  if ((/\s/).test(str)) {
+  if (/\s/.test(str)) {
     throw new Error('class has illegal whitespace characters');
   }
 }
 
 /**
- * Produce a regular expression for matching a className within an elements className.
+ * Produce a regular expression for matching a class name.
  *
- * @param {string} className
- *         The className to generate the RegExp for.
- *
+ * @param  {String} className
  * @return {RegExp}
- *         The RegExp that will check for a specific `className` in an elements
- *         className.
  */
 function classRegExp(className) {
   return new RegExp('(^|\\s)' + className + '($|\\s)');
 }
 
 /**
- * Whether the current DOM interface appears to be real.
- *
- * @return {Boolean}
- */
-export function isReal() {
-  return (
-
-    // Both document and window will never be undefined thanks to `global`.
-    document === window.document &&
-
-    // In IE < 9, DOM methods return "object" as their type, so all we can
-    // confidently check is that it exists.
-    typeof document.createElement !== 'undefined');
-}
-
-/**
- * Determines, via duck typing, whether or not a value is a DOM element.
- *
- * @param {Mixed} value
- *        The thing to check
- *
- * @return {boolean}
- *         - True if it is a DOM element
- *         - False otherwise
- */
-export function isEl(value) {
-  return isObject(value) && value.nodeType === 1;
-}
-
-/**
  * Creates functions to query the DOM using a given method.
  *
- * @param {string} method
- *         The method to create the query with.
- *
+ * @function createQuerier
+ * @private
+ * @param  {String} method
  * @return {Function}
- *         The query method
  */
 function createQuerier(method) {
-  return function(selector, context) {
+  return function (selector, context) {
     if (!isNonBlankString(selector)) {
       return document[method](null);
     }
     if (isNonBlankString(context)) {
       context = document.querySelector(context);
     }
-
-    const ctx = isEl(context) ? context : document;
-
-    return ctx[method] && ctx[method](selector);
+    return (isEl(context) ? context : document)[method](selector);
   };
 }
 
@@ -113,13 +64,11 @@ function createQuerier(method) {
  * Shorthand for document.getElementById()
  * Also allows for CSS (jQuery) ID syntax. But nothing other than IDs.
  *
- * @param {string} id
- *         The id of the element to get
- *
- * @return {Element|null}
- *         Element with supplied ID or null if there wasn't one.
+ * @param  {String} id  Element ID
+ * @return {Element}    Element with supplied ID
+ * @function getEl
  */
-export function getEl(id) {
+export function getEl(id){
   if (id.indexOf('#') === 0) {
     id = id.slice(1);
   }
@@ -130,26 +79,16 @@ export function getEl(id) {
 /**
  * Creates an element and applies properties.
  *
- * @param {string} [tagName='div']
- *         Name of tag to be created.
- *
- * @param {Object} [properties={}]
- *         Element properties to be applied.
- *
- * @param {Object} [attributes={}]
- *         Element attributes to be applied.
- *
- * @param {String|Element|TextNode|Array|Function} [content]
- *         Contents for the element (see: {@link dom:normalizeContent})
- *
+ * @param  {String=} tagName    Name of tag to be created.
+ * @param  {Object=} properties Element properties to be applied.
  * @return {Element}
- *         The element that was created.
+ * @function createEl
  */
-export function createEl(tagName = 'div', properties = {}, attributes = {}, content) {
-  const el = document.createElement(tagName);
+export function createEl(tagName='div', properties={}, attributes={}){
+  let el = document.createElement(tagName);
 
-  Object.getOwnPropertyNames(properties).forEach(function(propName) {
-    const val = properties[propName];
+  Object.getOwnPropertyNames(properties).forEach(function(propName){
+    let val = properties[propName];
 
     // See #2176
     // We originally were accepting both properties and attributes in the
@@ -159,23 +98,15 @@ export function createEl(tagName = 'div', properties = {}, attributes = {}, cont
                 has been deprecated. Use the third argument instead.
                 createEl(type, properties, attributes). Attempting to set ${propName} to ${val}.`);
       el.setAttribute(propName, val);
-
-    // Handle textContent since it's not supported everywhere and we have a
-    // method for it.
-    } else if (propName === 'textContent') {
-      textContent(el, val);
     } else {
       el[propName] = val;
     }
   });
 
-  Object.getOwnPropertyNames(attributes).forEach(function(attrName) {
+  Object.getOwnPropertyNames(attributes).forEach(function(attrName){
+    let val = attributes[attrName];
     el.setAttribute(attrName, attributes[attrName]);
   });
-
-  if (content) {
-    appendContent(el, content);
-  }
 
   return el;
 }
@@ -183,14 +114,10 @@ export function createEl(tagName = 'div', properties = {}, attributes = {}, cont
 /**
  * Injects text into an element, replacing any existing contents entirely.
  *
- * @param {Element} el
- *        The element to add text content into
- *
- * @param {string} text
- *        The text content to add.
- *
+ * @param  {Element} el
+ * @param  {String} text
  * @return {Element}
- *         The element with added text content.
+ * @function textContent
  */
 export function textContent(el, text) {
   if (typeof el.textContent === 'undefined') {
@@ -198,20 +125,17 @@ export function textContent(el, text) {
   } else {
     el.textContent = text;
   }
-  return el;
 }
 
 /**
  * Insert an element as the first child node of another
  *
- * @param {Element} child
- *        Element to insert
- *
- * @param {Element} parent
- *        Element to insert child into
- *
+ * @param  {Element} child   Element to insert
+ * @param  {Element} parent Element to insert child into
+ * @private
+ * @function insertElFirst
  */
-export function insertElFirst(child, parent) {
+export function insertElFirst(child, parent){
   if (parent.firstChild) {
     parent.insertBefore(child, parent.firstChild);
   } else {
@@ -232,7 +156,7 @@ const elData = {};
 /*
  * Unique attribute name to store an element's guid in
  *
- * @type {string}
+ * @type {String}
  * @constant
  * @private
  */
@@ -241,11 +165,9 @@ const elIdAttr = 'vdata' + (new Date()).getTime();
 /**
  * Returns the cache object where data for an element is stored
  *
- * @param {Element} el
- *        Element to store data for.
- *
+ * @param  {Element} el Element to store data for.
  * @return {Object}
- *         The cache object for that el that was passed in.
+ * @function getElData
  */
 export function getElData(el) {
   let id = el[elIdAttr];
@@ -264,12 +186,10 @@ export function getElData(el) {
 /**
  * Returns whether or not an element has cached data
  *
- * @param {Element} el
- *        Check if this element has cached data.
- *
- * @return {boolean}
- *         - True if the DOM element has cached data.
- *         - False otherwise.
+ * @param  {Element} el A dom element
+ * @return {Boolean}
+ * @private
+ * @function hasElData
  */
 export function hasElData(el) {
   const id = el[elIdAttr];
@@ -284,11 +204,12 @@ export function hasElData(el) {
 /**
  * Delete data for the element from the cache and the guid attr from getElementById
  *
- * @param {Element} el
- *        Remove cached data for this element.
+ * @param  {Element} el Remove data for an element
+ * @private
+ * @function removeElData
  */
 export function removeElData(el) {
-  const id = el[elIdAttr];
+  let id = el[elIdAttr];
 
   if (!id) {
     return;
@@ -300,7 +221,7 @@ export function removeElData(el) {
   // Remove the elIdAttr property from the DOM node
   try {
     delete el[elIdAttr];
-  } catch (e) {
+  } catch(e) {
     if (el.removeAttribute) {
       el.removeAttribute(elIdAttr);
     } else {
@@ -313,38 +234,25 @@ export function removeElData(el) {
 /**
  * Check if an element has a CSS class
  *
- * @param {Element} element
- *        Element to check
- *
- * @param {string} classToCheck
- *        Class name to check for
- *
- * @return {boolean}
- *         - True if the element had the class
- *         - False otherwise.
- *
- * @throws {Error}
- *         Throws an error if `classToCheck` has white space.
+ * @function hasElClass
+ * @param {Element} element Element to check
+ * @param {String} classToCheck Classname to check
  */
 export function hasElClass(element, classToCheck) {
-  throwIfWhitespace(classToCheck);
   if (element.classList) {
     return element.classList.contains(classToCheck);
+  } else {
+    throwIfWhitespace(classToCheck);
+    return classRegExp(classToCheck).test(element.className);
   }
-  return classRegExp(classToCheck).test(element.className);
 }
 
 /**
  * Add a CSS class name to an element
  *
- * @param {Element} element
- *        Element to add class name to.
- *
- * @param {string} classToAdd
- *        Class name to add.
- *
- * @return {Element}
- *         The dom element with the added class name.
+ * @function addElClass
+ * @param {Element} element    Element to add class name to
+ * @param {String} classToAdd Classname to add
  */
 export function addElClass(element, classToAdd) {
   if (element.classList) {
@@ -362,14 +270,9 @@ export function addElClass(element, classToAdd) {
 /**
  * Remove a CSS class name from an element
  *
- * @param {Element} element
- *        Element to remove a class name from.
- *
- * @param {string} classToRemove
- *        Class name to remove
- *
- * @return {Element}
- *         The dom element with class name removed.
+ * @function removeElClass
+ * @param {Element} element    Element to remove from class name
+ * @param {String} classToRemove Classname to remove
  */
 export function removeElClass(element, classToRemove) {
   if (element.classList) {
@@ -385,43 +288,23 @@ export function removeElClass(element, classToRemove) {
 }
 
 /**
- * The callback definition for toggleElClass.
- *
- * @callback Dom~PredicateCallback
- * @param {Element} element
- *        The DOM element of the Component.
- *
- * @param {string} classToToggle
- *        The `className` that wants to be toggled
- *
- * @return {boolean|undefined}
- *         - If true the `classToToggle` will get added to `element`.
- *         - If false the `classToToggle` will get removed from `element`.
- *         - If undefined this callback will be ignored
- */
-
-/**
  * Adds or removes a CSS class name on an element depending on an optional
  * condition or the presence/absence of the class name.
  *
- * @param {Element} element
- *        The element to toggle a class name on.
- *
- * @param {string} classToToggle
- *        The class that should be toggled
- *
- * @param {boolean|PredicateCallback} [predicate]
- *        See the return value for {@link Dom~PredicateCallback}
- *
- * @return {Element}
- *         The element with a class that has been toggled.
+ * @function toggleElClass
+ * @param    {Element} element
+ * @param    {String} classToToggle
+ * @param    {Boolean|Function} [predicate]
+ *           Can be a function that returns a Boolean. If `true`, the class
+ *           will be added; if `false`, the class will be removed. If not
+ *           given, the class will be added if not present and vice versa.
  */
 export function toggleElClass(element, classToToggle, predicate) {
 
   // This CANNOT use `classList` internally because IE does not support the
   // second parameter to the `classList.toggle()` method! Which is fine because
   // `classList` will be used by the add/remove functions.
-  const has = hasElClass(element, classToToggle);
+  let has = hasElClass(element, classToToggle);
 
   if (typeof predicate === 'function') {
     predicate = predicate(element, classToToggle);
@@ -449,15 +332,14 @@ export function toggleElClass(element, classToToggle, predicate) {
 /**
  * Apply attributes to an HTML element.
  *
- * @param {Element} el
- *        Element to add attributes to.
- *
- * @param {Object} [attributes]
- *        Attributes to be applied.
+ * @param  {Element} el         Target element.
+ * @param  {Object=} attributes Element attributes to be applied.
+ * @private
+ * @function setElAttributes
  */
 export function setElAttributes(el, attributes) {
-  Object.getOwnPropertyNames(attributes).forEach(function(attrName) {
-    const attrValue = attributes[attrName];
+  Object.getOwnPropertyNames(attributes).forEach(function(attrName){
+    let attrValue = attributes[attrName];
 
     if (attrValue === null || typeof attrValue === 'undefined' || attrValue === false) {
       el.removeAttribute(attrName);
@@ -473,30 +355,31 @@ export function setElAttributes(el, attributes) {
  * or with setAttribute (which shouldn't be used with HTML)
  * This will return true or false for boolean attributes.
  *
- * @param {Element} tag
- *        Element from which to get tag attributes.
- *
+ * @param  {Element} tag Element from which to get tag attributes
  * @return {Object}
- *         All attributes of the element.
+ * @private
+ * @function getElAttributes
  */
 export function getElAttributes(tag) {
-  const obj = {};
+  var obj, knownBooleans, attrs, attrName, attrVal;
+
+  obj = {};
 
   // known boolean attributes
   // we can check for matching boolean properties, but older browsers
   // won't know about HTML5 boolean attributes that we still read from
-  const knownBooleans = ',' + 'autoplay,controls,loop,muted,default' + ',';
+  knownBooleans = ','+'autoplay,controls,loop,muted,default'+',';
 
   if (tag && tag.attributes && tag.attributes.length > 0) {
-    const attrs = tag.attributes;
+    attrs = tag.attributes;
 
-    for (let i = attrs.length - 1; i >= 0; i--) {
-      const attrName = attrs[i].name;
-      let attrVal = attrs[i].value;
+    for (var i = attrs.length - 1; i >= 0; i--) {
+      attrName = attrs[i].name;
+      attrVal = attrs[i].value;
 
       // check for known booleans
       // the matching element property will return a value for typeof
-      if (typeof tag[attrName] === 'boolean' || knownBooleans.indexOf(',' + attrName + ',') !== -1) {
+      if (typeof tag[attrName] === 'boolean' || knownBooleans.indexOf(','+attrName+',') !== -1) {
         // the value of an included boolean attribute is typically an empty
         // string ('') which would equal false if we just check for a false value.
         // we also don't want support bad code like autoplay='false'
@@ -511,52 +394,10 @@ export function getElAttributes(tag) {
 }
 
 /**
- * Get the value of an element's attribute
- *
- * @param {Element} el
- *        A DOM element
- *
- * @param {string} attribute
- *        Attribute to get the value of
- *
- * @return {string}
- *         value of the attribute
- */
-export function getAttribute(el, attribute) {
-  return el.getAttribute(attribute);
-}
-
-/**
- * Set the value of an element's attribute
- *
- * @param {Element} el
- *        A DOM element
- *
- * @param {string} attribute
- *        Attribute to set
- *
- * @param {string} value
- *        Value to set the attribute to
- */
-export function setAttribute(el, attribute, value) {
-  el.setAttribute(attribute, value);
-}
-
-/**
- * Remove an element's attribute
- *
- * @param {Element} el
- *        A DOM element
- *
- * @param {string} attribute
- *        Attribute to remove
- */
-export function removeAttribute(el, attribute) {
-  el.removeAttribute(attribute);
-}
-
-/**
  * Attempt to block the ability to select text while dragging controls
+ *
+ * @return {Boolean}
+ * @function blockTextSelection
  */
 export function blockTextSelection() {
   document.body.focus();
@@ -567,6 +408,9 @@ export function blockTextSelection() {
 
 /**
  * Turn off text selection blocking
+ *
+ * @return {Boolean}
+ * @function unblockTextSelection
  */
 export function unblockTextSelection() {
   document.onselectstart = function() {
@@ -575,29 +419,13 @@ export function unblockTextSelection() {
 }
 
 /**
- * The postion of a DOM element on the page.
- *
- * @typedef {Object} Dom~Position
- *
- * @property {number} left
- *           Pixels to the left
- *
- * @property {number} top
- *           Pixels on top
- */
-
-/**
- * Offset Left.
+ * Offset Left
  * getBoundingClientRect technique from
- * John Resig
+ * John Resig http://ejohn.org/blog/getboundingclientrect-is-awesome/
  *
- * @see http://ejohn.org/blog/getboundingclientrect-is-awesome/
- *
- * @param {Element} el
- *        Element from which to get offset
- *
- * @return {Dom~Position}
- *         The position of the element that was passed in.
+ * @function findElPosition
+ * @param {Element} el Element from which to get offset
+ * @return {Object}
  */
 export function findElPosition(el) {
   let box;
@@ -632,40 +460,23 @@ export function findElPosition(el) {
 }
 
 /**
- * x and y coordinates for a dom element or mouse pointer
- *
- * @typedef {Object} Dom~Coordinates
- *
- * @property {number} x
- *           x coordinate in pixels
- *
- * @property {number} y
- *           y coordinate in pixels
- */
-
-/**
  * Get pointer position in element
  * Returns an object with x and y coordinates.
  * The base on the coordinates are the bottom left of the element.
  *
- * @param {Element} el
- *        Element on which to get the pointer position on
- *
- * @param {EventTarget~Event} event
- *        Event object
- *
- * @return {Dom~Coordinates}
- *         A Coordinates object corresponding to the mouse position.
- *
+ * @function getPointerPosition
+ * @param {Element} el Element on which to get the pointer position on
+ * @param {Event} event Event object
+ * @return {Object} This object will have x and y coordinates corresponding to the mouse position
  */
 export function getPointerPosition(el, event) {
-  const position = {};
-  const box = findElPosition(el);
-  const boxW = el.offsetWidth;
-  const boxH = el.offsetHeight;
+  let position = {};
+  let box = findElPosition(el);
+  let boxW = el.offsetWidth;
+  let boxH = el.offsetHeight;
 
-  const boxY = box.top;
-  const boxX = box.left;
+  let boxY = box.top;
+  let boxX = box.left;
   let pageY = event.pageY;
   let pageX = event.pageX;
 
@@ -681,27 +492,32 @@ export function getPointerPosition(el, event) {
 }
 
 /**
+ * Determines, via duck typing, whether or not a value is a DOM element.
+ *
+ * @function isEl
+ * @param    {Mixed} value
+ * @return   {Boolean}
+ */
+export function isEl(value) {
+  return !!value && typeof value === 'object' && value.nodeType === 1;
+}
+
+/**
  * Determines, via duck typing, whether or not a value is a text node.
  *
- * @param {Mixed} value
- *        Check if this value is a text node.
- *
- * @return {boolean}
- *         - True if it is a text node
- *         - False otherwise
+ * @param  {Mixed} value
+ * @return {Boolean}
  */
 export function isTextNode(value) {
-  return isObject(value) && value.nodeType === 3;
+  return !!value && typeof value === 'object' && value.nodeType === 3;
 }
 
 /**
  * Empties the contents of an element.
  *
- * @param {Element} el
- *        The element to empty children from
- *
- * @return {Element}
- *         The element with no children
+ * @function emptyEl
+ * @param    {Element} el
+ * @return   {Element}
  */
 export function emptyEl(el) {
   while (el.firstChild) {
@@ -720,16 +536,23 @@ export function emptyEl(el) {
  * The content for an element can be passed in multiple types and
  * combinations, whose behavior is as follows:
  *
- * @param {String|Element|TextNode|Array|Function} content
- *        - String: Normalized into a text node.
- *        - Element/TextNode: Passed through.
- *        - Array: A one-dimensional array of strings, elements, nodes, or functions
- *          (which return single strings, elements, or nodes).
- *        - Function: If the sole argument, is expected to produce a string, element,
- *          node, or array as defined above.
+ * - String
+ *   Normalized into a text node.
  *
- * @return {Array}
- *         All of the content that was passed in normalized.
+ * - Element, TextNode
+ *   Passed through.
+ *
+ * - Array
+ *   A one-dimensional array of strings, elements, nodes, or functions (which
+ *   return single strings, elements, or nodes).
+ *
+ * - Function
+ *   If the sole argument, is expected to produce a string, element,
+ *   node, or array.
+ *
+ * @function normalizeContent
+ * @param    {String|Element|TextNode|Array|Function} content
+ * @return   {Array}
  */
 export function normalizeContent(content) {
 
@@ -753,7 +576,7 @@ export function normalizeContent(content) {
       return value;
     }
 
-    if (typeof value === 'string' && (/\S/).test(value)) {
+    if (typeof value === 'string' && /\S/.test(value)) {
       return document.createTextNode(value);
     }
   }).filter(value => value);
@@ -762,15 +585,11 @@ export function normalizeContent(content) {
 /**
  * Normalizes and appends content to an element.
  *
- * @param {Element} el
- *        Element to append normalized content to.
- *
- *
- * @param {String|Element|TextNode|Array|Function} content
- *        See the `content` argument of {@link dom:normalizeContent}
- *
- * @return {Element}
- *         The element with appended normalized content.
+ * @function appendContent
+ * @param    {Element} el
+ * @param    {String|Element|TextNode|Array|Function} content
+ *           See: `normalizeContent`
+ * @return   {Element}
  */
 export function appendContent(el, content) {
   normalizeContent(content).forEach(node => el.appendChild(node));
@@ -781,15 +600,11 @@ export function appendContent(el, content) {
  * Normalizes and inserts content into an element; this is identical to
  * `appendContent()`, except it empties the element first.
  *
- * @param {Element} el
- *        Element to insert normalized content into.
- *
- * @param {String|Element|TextNode|Array|Function} content
- *        See the `content` argument of {@link dom:normalizeContent}
- *
- * @return {Element}
- *         The element with inserted normalized content.
- *
+ * @function insertContent
+ * @param    {Element} el
+ * @param    {String|Element|TextNode|Array|Function} content
+ *           See: `normalizeContent`
+ * @return   {Element}
  */
 export function insertContent(el, content) {
   return appendContent(emptyEl(el), content);
@@ -799,17 +614,17 @@ export function insertContent(el, content) {
  * Finds a single DOM element matching `selector` within the optional
  * `context` of another DOM element (defaulting to `document`).
  *
- * @param {string} selector
- *        A valid CSS selector, which will be passed to `querySelector`.
+ * @function $
+ * @param    {String} selector
+ *           A valid CSS selector, which will be passed to `querySelector`.
  *
- * @param {Element|String} [context=document]
- *        A DOM element within which to query. Can also be a selector
- *        string in which case the first matching element will be used
- *        as context. If missing (or no element matches selector), falls
- *        back to `document`.
+ * @param    {Element|String} [context=document]
+ *           A DOM element within which to query. Can also be a selector
+ *           string in which case the first matching element will be used
+ *           as context. If missing (or no element matches selector), falls
+ *           back to `document`.
  *
- * @return {Element|null}
- *         The element that was found or null.
+ * @return   {Element|null}
  */
 export const $ = createQuerier('querySelector');
 
@@ -817,17 +632,16 @@ export const $ = createQuerier('querySelector');
  * Finds a all DOM elements matching `selector` within the optional
  * `context` of another DOM element (defaulting to `document`).
  *
- * @param {string} selector
+ * @function $$
+ * @param    {String} selector
  *           A valid CSS selector, which will be passed to `querySelectorAll`.
  *
- * @param {Element|String} [context=document]
+ * @param    {Element|String} [context=document]
  *           A DOM element within which to query. Can also be a selector
  *           string in which case the first matching element will be used
  *           as context. If missing (or no element matches selector), falls
  *           back to `document`.
  *
- * @return {NodeList}
- *         A element list of elements that were found. Will be empty if none were found.
- *
+ * @return   {NodeList}
  */
 export const $$ = createQuerier('querySelectorAll');

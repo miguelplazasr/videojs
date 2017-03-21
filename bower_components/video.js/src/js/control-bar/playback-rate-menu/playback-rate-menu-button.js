@@ -8,22 +8,16 @@ import Component from '../../component.js';
 import * as Dom from '../../utils/dom.js';
 
 /**
- * The component for controlling the playback rate.
+ * The component for controlling the playback rate
  *
+ * @param {Player|Object} player
+ * @param {Object=} options
  * @extends MenuButton
+ * @class PlaybackRateMenuButton
  */
 class PlaybackRateMenuButton extends MenuButton {
 
-  /**
-   * Creates an instance of this class.
-   *
-   * @param {Player} player
-   *        The `Player` that this class should be attached to.
-   *
-   * @param {Object} [options]
-   *        The key/value store of player options.
-   */
-  constructor(player, options) {
+  constructor(player, options){
     super(player, options);
 
     this.updateVisibility();
@@ -34,13 +28,13 @@ class PlaybackRateMenuButton extends MenuButton {
   }
 
   /**
-   * Create the `Component`'s DOM element
+   * Create the component's DOM element
    *
    * @return {Element}
-   *         The element that was created.
+   * @method createEl
    */
   createEl() {
-    const el = super.createEl();
+    let el = super.createEl();
 
     this.labelEl_ = Dom.createEl('div', {
       className: 'vjs-playback-rate-value',
@@ -53,10 +47,10 @@ class PlaybackRateMenuButton extends MenuButton {
   }
 
   /**
-   * Builds the default DOM `className`.
+   * Allow sub components to stack CSS class names
    *
-   * @return {string}
-   *         The DOM `className` for this object.
+   * @return {String} The constructed class name
+   * @method buildCSSClass
    */
   buildCSSClass() {
     return `vjs-playback-rate ${super.buildCSSClass()}`;
@@ -65,17 +59,17 @@ class PlaybackRateMenuButton extends MenuButton {
   /**
    * Create the playback rate menu
    *
-   * @return {Menu}
-   *         Menu object populated with {@link PlaybackRateMenuItem}s
+   * @return {Menu} Menu object populated with items
+   * @method createMenu
    */
   createMenu() {
-    const menu = new Menu(this.player());
-    const rates = this.playbackRates();
+    let menu = new Menu(this.player());
+    let rates = this.playbackRates();
 
     if (rates) {
       for (let i = rates.length - 1; i >= 0; i--) {
         menu.addChild(
-          new PlaybackRateMenuItem(this.player(), {rate: rates[i] + 'x'})
+          new PlaybackRateMenuItem(this.player(), { 'rate': rates[i] + 'x'})
         );
       }
     }
@@ -85,6 +79,8 @@ class PlaybackRateMenuButton extends MenuButton {
 
   /**
    * Updates ARIA accessibility attributes
+   *
+   * @method updateARIAAttributes
    */
   updateARIAAttributes() {
     // Current playback rate
@@ -92,25 +88,18 @@ class PlaybackRateMenuButton extends MenuButton {
   }
 
   /**
-   * This gets called when an `PlaybackRateMenuButton` is "clicked". See
-   * {@link ClickableComponent} for more detailed information on what a click can be.
+   * Handle menu item click
    *
-   * @param {EventTarget~Event} [event]
-   *        The `keydown`, `tap`, or `click` event that caused this function to be
-   *        called.
-   *
-   * @listens tap
-   * @listens click
+   * @method handleClick
    */
-  handleClick(event) {
+  handleClick() {
     // select next rate option
-    const currentRate = this.player().playbackRate();
-    const rates = this.playbackRates();
+    let currentRate = this.player().playbackRate();
+    let rates = this.playbackRates();
 
     // this will select first one if the last one currently selected
     let newRate = rates[0];
-
-    for (let i = 0; i < rates.length; i++) {
+    for (let i = 0; i < rates.length ; i++) {
       if (rates[i] > currentRate) {
         newRate = rates[i];
         break;
@@ -122,37 +111,33 @@ class PlaybackRateMenuButton extends MenuButton {
   /**
    * Get possible playback rates
    *
-   * @return {Array}
-   *         All possible playback rates
+   * @return {Array} Possible playback rates
+   * @method playbackRates
    */
   playbackRates() {
-    return this.options_.playbackRates || (this.options_.playerOptions && this.options_.playerOptions.playbackRates);
+    return this.options_['playbackRates'] || (this.options_.playerOptions && this.options_.playerOptions['playbackRates']);
   }
 
   /**
-   * Get whether playback rates is supported by the tech
-   * and an array of playback rates exists
+   * Get supported playback rates
    *
-   * @return {boolean}
-   *         Whether changing playback rate is supported
+   * @return {Array} Supported playback rates
+   * @method playbackRateSupported
    */
   playbackRateSupported() {
-    return this.player().tech_ &&
-      this.player().tech_.featuresPlaybackRate &&
-      this.playbackRates() &&
-      this.playbackRates().length > 0
+    return this.player().tech_
+      && this.player().tech_['featuresPlaybackRate']
+      && this.playbackRates()
+      && this.playbackRates().length > 0
     ;
   }
 
   /**
    * Hide playback rate controls when they're no playback rate options to select
    *
-   * @param {EventTarget~Event} [event]
-   *        The event that caused this function to run.
-   *
-   * @listens Player#loadstart
+   * @method updateVisibility
    */
-  updateVisibility(event) {
+  updateVisibility() {
     if (this.playbackRateSupported()) {
       this.removeClass('vjs-hidden');
     } else {
@@ -163,12 +148,9 @@ class PlaybackRateMenuButton extends MenuButton {
   /**
    * Update button label when rate changed
    *
-   * @param {EventTarget~Event} [event]
-   *        The event that caused this function to run.
-   *
-   * @listens Player#ratechange
+   * @method updateLabel
    */
-  updateLabel(event) {
+  updateLabel() {
     if (this.playbackRateSupported()) {
       this.labelEl_.innerHTML = this.player().playbackRate() + 'x';
     }
@@ -176,12 +158,6 @@ class PlaybackRateMenuButton extends MenuButton {
 
 }
 
-/**
- * The text that should display over the `FullscreenToggle`s controls. Added for localization.
- *
- * @type {string}
- * @private
- */
 PlaybackRateMenuButton.prototype.controlText_ = 'Playback Rate';
 
 Component.registerComponent('PlaybackRateMenuButton', PlaybackRateMenuButton);

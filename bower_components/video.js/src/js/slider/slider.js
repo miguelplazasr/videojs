@@ -3,25 +3,19 @@
  */
 import Component from '../component.js';
 import * as Dom from '../utils/dom.js';
-import {assign} from '../utils/obj';
+import document from 'global/document';
+import assign from 'object.assign';
 
 /**
- * The base functionality for a slider. Can be vertical or horizontal.
- * For instance the volume bar or the seek bar on a video is a slider.
+ * The base functionality for sliders like the volume bar and seek bar
  *
+ * @param {Player|Object} player
+ * @param {Object=} options
  * @extends Component
+ * @class Slider
  */
 class Slider extends Component {
 
-/**
- * Create an instance of this class
- *
- * @param {Player} player
- *        The `Player` that this class should be attached to.
- *
- * @param {Object} [options]
- *        The key/value store of player options.
- */
   constructor(player, options) {
     super(player, options);
 
@@ -42,21 +36,14 @@ class Slider extends Component {
   }
 
   /**
-   * Create the `Button`s DOM element.
+   * Create the component's DOM element
    *
-   * @param {string} type
-   *        Type of element to create.
-   *
-   * @param {Object} [props={}]
-   *        List of properties in Object form.
-   *
-   * @param {Object} [attributes={}]
-   *        list of attributes in Object form.
-   *
+   * @param {String} type Type of element to create
+   * @param {Object=} props List of properties in Object form
    * @return {Element}
-   *         The element that gets created.
+   * @method createEl
    */
-  createEl(type, props = {}, attributes = {}) {
+  createEl(type, props={}, attributes={}) {
     // Add the slider element class to all sub classes
     props.className = props.className + ' vjs-slider';
     props = assign({
@@ -68,123 +55,88 @@ class Slider extends Component {
       'aria-valuenow': 0,
       'aria-valuemin': 0,
       'aria-valuemax': 100,
-      'tabIndex': 0
+      tabIndex: 0
     }, attributes);
 
     return super.createEl(type, props, attributes);
   }
 
   /**
-   * Handle `mousedown` or `touchstart` events on the `Slider`.
+   * Handle mouse down on slider
    *
-   * @param {EventTarget~Event} event
-   *        `mousedown` or `touchstart` event that triggered this function
-   *
-   * @listens mousedown
-   * @listens touchstart
-   * @fires Slider#slideractive
+   * @param {Object} event Mouse down event object
+   * @method handleMouseDown
    */
   handleMouseDown(event) {
-    const doc = this.bar.el_.ownerDocument;
-
     event.preventDefault();
     Dom.blockTextSelection();
 
     this.addClass('vjs-sliding');
-    /**
-     * Triggered when the slider is in an active state
-     *
-     * @event Slider#slideractive
-     * @type {EventTarget~Event}
-     */
     this.trigger('slideractive');
 
-    this.on(doc, 'mousemove', this.handleMouseMove);
-    this.on(doc, 'mouseup', this.handleMouseUp);
-    this.on(doc, 'touchmove', this.handleMouseMove);
-    this.on(doc, 'touchend', this.handleMouseUp);
+    this.on(document, 'mousemove', this.handleMouseMove);
+    this.on(document, 'mouseup', this.handleMouseUp);
+    this.on(document, 'touchmove', this.handleMouseMove);
+    this.on(document, 'touchend', this.handleMouseUp);
 
     this.handleMouseMove(event);
   }
 
   /**
-   * Handle the `mousemove`, `touchmove`, and `mousedown` events on this `Slider`.
-   * The `mousemove` and `touchmove` events will only only trigger this function during
-   * `mousedown` and `touchstart`. This is due to {@link Slider#handleMouseDown} and
-   * {@link Slider#handleMouseUp}.
+   * To be overridden by a subclass
    *
-   * @param {EventTarget~Event} event
-   *        `mousedown`, `mousemove`, `touchstart`, or `touchmove` event that triggered
-   *        this function
-   *
-   * @listens mousemove
-   * @listens touchmove
+   * @method handleMouseMove
    */
-  handleMouseMove(event) {}
+  handleMouseMove() {}
 
   /**
-   * Handle `mouseup` or `touchend` events on the `Slider`.
+   * Handle mouse up on Slider
    *
-   * @param {EventTarget~Event} event
-   *        `mouseup` or `touchend` event that triggered this function.
-   *
-   * @listens touchend
-   * @listens mouseup
-   * @fires Slider#sliderinactive
+   * @method handleMouseUp
    */
   handleMouseUp() {
-    const doc = this.bar.el_.ownerDocument;
-
     Dom.unblockTextSelection();
 
     this.removeClass('vjs-sliding');
-    /**
-     * Triggered when the slider is no longer in an active state.
-     *
-     * @event Slider#sliderinactive
-     * @type {EventTarget~Event}
-     */
     this.trigger('sliderinactive');
 
-    this.off(doc, 'mousemove', this.handleMouseMove);
-    this.off(doc, 'mouseup', this.handleMouseUp);
-    this.off(doc, 'touchmove', this.handleMouseMove);
-    this.off(doc, 'touchend', this.handleMouseUp);
+    this.off(document, 'mousemove', this.handleMouseMove);
+    this.off(document, 'mouseup', this.handleMouseUp);
+    this.off(document, 'touchmove', this.handleMouseMove);
+    this.off(document, 'touchend', this.handleMouseUp);
 
     this.update();
   }
 
   /**
-   * Update the progress bar of the `Slider`.
+   * Update slider
+   *
+   * @method update
    */
   update() {
     // In VolumeBar init we have a setTimeout for update that pops and update to the end of the
     // execution stack. The player is destroyed before then update will cause an error
-    if (!this.el_) {
-      return;
-    }
+    if (!this.el_) return;
 
     // If scrubbing, we could use a cached value to make the handle keep up with the user's mouse.
     // On HTML5 browsers scrubbing is really smooth, but some flash players are slow, so we might want to utilize this later.
     // var progress =  (this.player_.scrubbing()) ? this.player_.getCache().currentTime / this.player_.duration() : this.player_.currentTime() / this.player_.duration();
     let progress = this.getPercent();
-    const bar = this.bar;
+    let bar = this.bar;
 
     // If there's no bar...
-    if (!bar) {
-      return;
-    }
+    if (!bar) return;
 
     // Protect against no duration and other division issues
     if (typeof progress !== 'number' ||
         progress !== progress ||
         progress < 0 ||
         progress === Infinity) {
-      progress = 0;
+          progress = 0;
     }
 
     // Convert to a percentage for setting
-    const percentage = (progress * 100).toFixed(2) + '%';
+    let percentage = (progress * 100).toFixed(2) + '%';
 
     // Set the new bar width or height
     if (this.vertical()) {
@@ -197,17 +149,11 @@ class Slider extends Component {
   /**
    * Calculate distance for slider
    *
-   * @param {EventTarget~Event} event
-   *        The event that caused this function to run.
-   *
-   * @return {number}
-   *         The current position of the Slider.
-   *         - postition.x for vertical `Slider`s
-   *         - postition.y for horizontal `Slider`s
+   * @param {Object} event Event object
+   * @method calculateDistance
    */
-  calculateDistance(event) {
-    const position = Dom.getPointerPosition(this.el_, event);
-
+  calculateDistance(event){
+    let position = Dom.getPointerPosition(this.el_, event);
     if (this.vertical()) {
       return position.y;
     }
@@ -215,59 +161,45 @@ class Slider extends Component {
   }
 
   /**
-   * Handle a `focus` event on this `Slider`.
+   * Handle on focus for slider
    *
-   * @param {EventTarget~Event} event
-   *        The `focus` event that caused this function to run.
-   *
-   * @listens focus
+   * @method handleFocus
    */
   handleFocus() {
-    this.on(this.bar.el_.ownerDocument, 'keydown', this.handleKeyPress);
+    this.on(document, 'keydown', this.handleKeyPress);
   }
 
   /**
-   * Handle a `keydown` event on the `Slider`. Watches for left, rigth, up, and down
-   * arrow keys. This function will only be called when the slider has focus. See
-   * {@link Slider#handleFocus} and {@link Slider#handleBlur}.
+   * Handle key press for slider
    *
-   * @param {EventTarget~Event} event
-   *        the `keydown` event that caused this function to run.
-   *
-   * @listens keydown
+   * @param {Object} event Event object
+   * @method handleKeyPress
    */
   handleKeyPress(event) {
-    // Left and Down Arrows
-    if (event.which === 37 || event.which === 40) {
+    if (event.which === 37 || event.which === 40) { // Left and Down Arrows
       event.preventDefault();
       this.stepBack();
-
-    // Up and Right Arrows
-    } else if (event.which === 38 || event.which === 39) {
+    } else if (event.which === 38 || event.which === 39) { // Up and Right Arrows
       event.preventDefault();
       this.stepForward();
     }
   }
 
   /**
-   * Handle a `blur` event on this `Slider`.
+   * Handle on blur for slider
    *
-   * @param {EventTarget~Event} event
-   *        The `blur` event that caused this function to run.
-   *
-   * @listens blur
+   * @method handleBlur
    */
-
   handleBlur() {
-    this.off(this.bar.el_.ownerDocument, 'keydown', this.handleKeyPress);
+    this.off(document, 'keydown', this.handleKeyPress);
   }
 
   /**
    * Listener for click events on slider, used to prevent clicks
    *   from bubbling up to parent elements like button menus.
    *
-   * @param {Object} event
-   *        Event that caused this object to run
+   * @param {Object} event Event object
+   * @method handleClick
    */
   handleClick(event) {
     event.stopImmediatePropagation();
@@ -277,14 +209,9 @@ class Slider extends Component {
   /**
    * Get/set if slider is horizontal for vertical
    *
-   * @param {boolean} [bool]
-   *        - true if slider is vertical,
-   *        - false is horizontal
-   *
-   * @return {boolean|Slider}
-   *         - true if slider is vertical, and getting
-   *         - false is horizontal, and getting
-   *         - a reference to this object when setting
+   * @param {Boolean} bool True if slider is vertical, false is horizontal
+   * @return {Boolean} True if slider is vertical, false is horizontal
+   * @method vertical
    */
   vertical(bool) {
     if (bool === undefined) {
@@ -301,6 +228,7 @@ class Slider extends Component {
 
     return this;
   }
+
 }
 
 Component.registerComponent('Slider', Slider);

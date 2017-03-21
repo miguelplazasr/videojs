@@ -1,29 +1,23 @@
 /**
  * @file poster-image.js
  */
-import ClickableComponent from './clickable-component.js';
+import Button from './button.js';
 import Component from './component.js';
 import * as Fn from './utils/fn.js';
 import * as Dom from './utils/dom.js';
 import * as browser from './utils/browser.js';
 
 /**
- * A `ClickableComponent` that handles showing the poster image for the player.
+ * The component that handles showing the poster image.
  *
- * @extends ClickableComponent
+ * @param {Player|Object} player
+ * @param {Object=} options
+ * @extends Button
+ * @class PosterImage
  */
-class PosterImage extends ClickableComponent {
+class PosterImage extends Button {
 
-  /**
-   * Create an instance of this class.
-   *
-   * @param {Player} player
-   *        The `Player` that this class should attach to.
-   *
-   * @param {Object} [options]
-   *        The key/value store of player options.
-   */
-  constructor(player, options) {
+  constructor(player, options){
     super(player, options);
 
     this.update();
@@ -31,7 +25,9 @@ class PosterImage extends ClickableComponent {
   }
 
   /**
-   * Clean up and dispose of the `PosterImage`.
+   * Clean up the poster image
+   *
+   * @method dispose
    */
   dispose() {
     this.player().off('posterchange', this.update);
@@ -39,13 +35,13 @@ class PosterImage extends ClickableComponent {
   }
 
   /**
-   * Create the `PosterImage`s DOM element.
+   * Create the poster's image element
    *
    * @return {Element}
-   *         The element that gets created.
+   * @method createEl
    */
   createEl() {
-    const el = Dom.createEl('div', {
+    let el = Dom.createEl('div', {
       className: 'vjs-poster',
 
       // Don't want poster to be tabbable.
@@ -65,15 +61,12 @@ class PosterImage extends ClickableComponent {
   }
 
   /**
-   * An {@link EventTarget~EventListener} for {@link Player#posterchange} events.
+   * Event handler for updates to the player's poster source
    *
-   * @listens Player#posterchange
-   *
-   * @param {EventTarget~Event} [event]
-   *        The `Player#posterchange` event that triggered this function.
+   * @method update
    */
-  update(event) {
-    const url = this.player().poster();
+  update() {
+    let url = this.player().poster();
 
     this.setSrc(url);
 
@@ -87,17 +80,16 @@ class PosterImage extends ClickableComponent {
   }
 
   /**
-   * Set the source of the `PosterImage` depending on the display method.
+   * Set the poster source depending on the display method
    *
-   * @param {string} url
-   *        The URL to the source for the `PosterImage`.
+   * @param {String} url The URL to the poster source
+   * @method setSrc
    */
   setSrc(url) {
     if (this.fallbackImg_) {
       this.fallbackImg_.src = url;
     } else {
       let backgroundImage = '';
-
       // Any falsey values should stay as an empty string, otherwise
       // this will throw an extra error
       if (url) {
@@ -109,22 +101,13 @@ class PosterImage extends ClickableComponent {
   }
 
   /**
-   * An {@link EventTarget~EventListener} for clicks on the `PosterImage`. See
-   * {@link ClickableComponent#handleClick} for instances where this will be triggered.
+   * Event handler for clicks on the poster image
    *
-   * @listens tap
-   * @listens click
-   * @listens keydown
-   *
-   * @param {EventTarget~Event} event
-   +        The `click`, `tap` or `keydown` event that caused this function to be called.
+   * @method handleClick
    */
-  handleClick(event) {
+  handleClick() {
     // We don't want a click to trigger playback when controls are disabled
-    if (!this.player_.controls()) {
-      return;
-    }
-
+    // but CSS should be hiding the poster to prevent that from happening
     if (this.player_.paused()) {
       this.player_.play();
     } else {

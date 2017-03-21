@@ -250,54 +250,30 @@
       ]
     },
 
-    "next": {
-      "patch": {
-        "description": "Create a patch release and tag it @next on npm",
-        "release_type": "patch",
-        "steps": [{ "include": "release run_next" }]
-      },
-      "minor": {
-        "description": "Create a minor release and tag it @next on npm",
-        "release_type": "minor",
-        "steps": [{ "include": "release run_next" }]
-      },
-      "major": {
-        "description": "Create a major release and tag it @next on npm",
-        "release_type": "major",
-        "steps": [{ "include": "release run_next" }]
-      }
-    },
-
     "prerelease": {
       "release_type": "prerelease",
-      "steps": [{ "include": "release run_next" }]
-    },
-
-    "run_next": {
       "steps": [
+        [ "git checkout master",                       "Checkout the developmet branch" ],
+        [ "git pull upstream master",                  "Update the developmet branch" ],
         { "include": "branch check" },
-        { "include": "update local master" },
         [ "git checkout -b temp-release-branch master","Create a temporary branch for the dist" ],
         [ "grunt version:{{release_type}}",            "Bump package versions" ],
         [ "./build/bin/version",                       "Return the current VJS Version from the package.json file", "version" ],
-        [ "npm run changelog",                         "Update the changelog with the new release" ],
         [ "git commit -am 'v{{version}}'",             "Add and commit the package changes" ],
         [ "git checkout master",                       "Checkout the developmet branch" ],
         [ "git merge temp-release-branch",             "Merge package changes into the dev brach" ],
         [ "git push upstream master",                  "Push the dev branch changes to the repo" ],
         [ "git checkout temp-release-branch",          "Checkout the temp branch again" ],
         [ "grunt dist",                                "Build the dist" ],
-        [ "git add es5 dist --force",                      "Add the (otherwise ignored) release files" ],
+        [ "git add dist --force",                      "Add the (otherwise ignored) release files" ],
         [ "git commit -m 'v{{version}} dist'",         "Commit the dist changes" ],
         [ "git tag -a v{{version}} -m 'v{{version}}'", "Tag the release" ],
         [ "git push upstream --tags",                  "Push the new tag to the repo" ],
-        [ "grunt github-release:prerelease",           "Create a new pre-release on Github" ],
         [ "npm publish --tag next",                    "Publish to npm as 'next'" ],
         [ "git checkout master",                       "Checkout the developmet branch" ],
         [ "git branch -D temp-release-branch",         "Delete the temp release branch" ]
       ]
     },
-
     "run": {
       "steps": [
         { "include": "branch check" },
@@ -306,17 +282,17 @@
         [ "grunt test",                                "Run tests" ],
         [ "grunt version:{{release_type}}",            "Bump package versions" ],
         [ "./build/bin/version",                       "Return the current VJS Version from the package.json file", "version" ],
-        [ "npm run changelog",                         "Update the changelog with the new release" ],
+        [ "grunt chg-release:{{version}}",             "Update the changelog with the new release" ],
         [ "git commit -am 'v{{version}}'",             "Add and commit the package changes" ],
         [ "git push upstream stable",                  "Push the release branch changes to the repo" ],
         [ "git checkout -b temp-release-branch stable","Create a temporary branch for the dist" ],
         [ "grunt dist",                                "Build the dist" ],
-        [ "git add es5 dist --force",                      "Add the (otherwise ignored) release files" ],
+        [ "git add dist --force",                      "Add the (otherwise ignored) release files" ],
         [ "git commit -m 'v{{version}} dist'",         "Commit the dist changes" ],
         [ "git tag -a v{{version}} -m 'v{{version}}'", "Tag the release" ],
         [ "git push upstream --tags",                  "Push the new tag to the repo" ],
         [ "npm publish",                               "Publish to npm" ],
-        [ "grunt github-release:release",              "Create a new release on Github" ],
+        [ "grunt github-release",                      "Create a new release on Github" ],
         [ "git checkout stable",                       "Checkout the developmet branch" ],
         [ "git branch -D temp-release-branch",         "Delete the temp release branch" ]
       ]

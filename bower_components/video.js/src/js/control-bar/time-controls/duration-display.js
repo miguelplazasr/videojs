@@ -8,39 +8,33 @@ import formatTime from '../../utils/format-time.js';
 /**
  * Displays the duration
  *
+ * @param {Player|Object} player
+ * @param {Object=} options
  * @extends Component
+ * @class DurationDisplay
  */
 class DurationDisplay extends Component {
 
-  /**
-   * Creates an instance of this class.
-   *
-   * @param {Player} player
-   *        The `Player` that this class should be attached to.
-   *
-   * @param {Object} [options]
-   *        The key/value store of player options.
-   */
-  constructor(player, options) {
+  constructor(player, options){
     super(player, options);
 
-    this.on(player, 'durationchange', this.updateContent);
-
-    // Also listen for timeupdate and loadedmetadata because removing those
-    // listeners could have broken dependent applications/libraries. These
-    // can likely be removed for 6.0.
+    // this might need to be changed to 'durationchange' instead of 'timeupdate' eventually,
+    // however the durationchange event fires before this.player_.duration() is set,
+    // so the value cannot be written out using this method.
+    // Once the order of durationchange and this.player_.duration() being set is figured out,
+    // this can be updated.
     this.on(player, 'timeupdate', this.updateContent);
     this.on(player, 'loadedmetadata', this.updateContent);
   }
 
   /**
-   * Create the `Component`'s DOM element
+   * Create the component's DOM element
    *
    * @return {Element}
-   *         The element that was created.
+   * @method createEl
    */
   createEl() {
-    const el = super.createEl('div', {
+    let el = super.createEl('div', {
       className: 'vjs-duration vjs-time-control vjs-control'
     });
 
@@ -58,26 +52,16 @@ class DurationDisplay extends Component {
   }
 
   /**
-   * Update duration time display.
+   * Update duration time display
    *
-   * @param {EventTarget~Event} [event]
-   *        The `durationchange`, `timeupdate`, or `loadedmetadata` event that caused
-   *        this function to be called.
-   *
-   * @listens Player#durationchange
-   * @listens Player#timeupdate
-   * @listens Player#loadedmetadata
+   * @method updateContent
    */
-  updateContent(event) {
-    const duration = this.player_.duration();
-
-    if (duration && this.duration_ !== duration) {
-      this.duration_ = duration;
-      const localizedText = this.localize('Duration Time');
-      const formattedTime = formatTime(duration);
-
-      // label the duration time for screen reader users
-      this.contentEl_.innerHTML = `<span class="vjs-control-text">${localizedText}</span> ${formattedTime}`;
+  updateContent() {
+    let duration = this.player_.duration();
+    if (duration) {
+      let localizedText = this.localize('Duration Time');
+      let formattedTime = formatTime(duration);
+      this.contentEl_.innerHTML = `<span class="vjs-control-text">${localizedText}</span> ${formattedTime}`; // label the duration time for screen reader users
     }
   }
 

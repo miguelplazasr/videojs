@@ -1,22 +1,14 @@
 /**
  * @file to-title-case.js
- * @module to-title-case
- */
-
-/**
- * Uppercase the first letter of a string.
  *
- * @param {string} string
- *        String to be uppercased
+ * Uppercase the first letter of a string
  *
- * @return {string}
- *         The string with an uppercased first letter
+ * @param  {String} string String to be uppercased
+ * @return {String}
+ * @private
+ * @method toTitleCase
  */
-function toTitleCase(string) {
-  if (typeof string !== 'string') {
-    return string;
-  }
-
+function toTitleCase(string){
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
 

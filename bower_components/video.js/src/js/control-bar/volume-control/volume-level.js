@@ -6,15 +6,18 @@ import Component from '../../component.js';
 /**
  * Shows volume level
  *
+ * @param {Player|Object} player
+ * @param {Object=} options
  * @extends Component
+ * @class VolumeLevel
  */
 class VolumeLevel extends Component {
 
   /**
-   * Create the `Component`'s DOM element
+   * Create the component's DOM element
    *
    * @return {Element}
-   *         The element that was created.
+   * @method createEl
    */
   createEl() {
     return super.createEl('div', {

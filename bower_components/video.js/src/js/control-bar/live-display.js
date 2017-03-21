@@ -4,24 +4,15 @@
 import Component from '../component';
 import * as Dom from '../utils/dom.js';
 
-// TODO - Future make it click to snap to live
-
 /**
- * Displays the live indicator when duration is Infinity.
+ * Displays the live indicator
+ * TODO - Future make it click to snap to live
  *
  * @extends Component
+ * @class LiveDisplay
  */
 class LiveDisplay extends Component {
 
-  /**
-   * Creates an instance of this class.
-   *
-   * @param {Player} player
-   *        The `Player` that this class should be attached to.
-   *
-   * @param {Object} [options]
-   *        The key/value store of player options.
-   */
   constructor(player, options) {
     super(player, options);
 
@@ -30,13 +21,13 @@ class LiveDisplay extends Component {
   }
 
   /**
-   * Create the `Component`'s DOM element
+   * Create the component's DOM element
    *
    * @return {Element}
-   *         The element that was created.
+   * @method createEl
    */
   createEl() {
-    const el = super.createEl('div', {
+    var el = super.createEl('div', {
       className: 'vjs-live-control vjs-control'
     });
 
@@ -51,16 +42,7 @@ class LiveDisplay extends Component {
     return el;
   }
 
-  /**
-   * Check the duration to see if the LiveDisplay should be showing or not. Then show/hide
-   * it accordingly
-   *
-   * @param {EventTarget~Event} [event]
-   *        The {@link Player#durationchange} event that caused this function to run.
-   *
-   * @listens Player#durationchange
-   */
-  updateShowing(event) {
+  updateShowing() {
     if (this.player().duration() === Infinity) {
       this.show();
     } else {

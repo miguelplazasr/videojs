@@ -1,40 +1,60 @@
 /**
  * @file merge-options.js
- * @module merge-options
  */
-import {each, isPlain} from './obj';
+import merge from 'lodash-compat/object/merge';
+
+function isPlain(obj) {
+  return !!obj
+    && typeof obj === 'object'
+    && obj.toString() === '[object Object]'
+    && obj.constructor === Object;
+}
 
 /**
- * Deep-merge one or more options objects, recursively merging **only** plain
- * object properties.
- *
- * @param   {Object[]} sources
- *          One or more objects to merge into a new object.
- *
- * @returns {Object}
- *          A new object that is the merged result of all sources.
+ * Merge customizer. video.js simply overwrites non-simple objects
+ * (like arrays) instead of attempting to overlay them.
+ * @see https://lodash.com/docs#merge
  */
-export default function mergeOptions(...sources) {
-  const result = {};
+const customizer = function(destination, source) {
+  // If we're not working with a plain object, copy the value as is
+  // If source is an array, for instance, it will replace destination
+  if (!isPlain(source)) {
+    return source;
+  }
 
-  sources.forEach(source => {
-    if (!source) {
-      return;
-    }
+  // If the new value is a plain object but the first object value is not
+  // we need to create a new object for the first object to merge with.
+  // This makes it consistent with how merge() works by default
+  // and also protects from later changes the to first object affecting
+  // the second object's values.
+  if (!isPlain(destination)) {
+    return mergeOptions(source);
+  }
+};
 
-    each(source, (value, key) => {
-      if (!isPlain(value)) {
-        result[key] = value;
-        return;
-      }
+/**
+ * Merge one or more options objects, recursively merging **only**
+ * plain object properties.  Previously `deepMerge`.
+ *
+ * @param  {...Object} source One or more objects to merge
+ * @returns {Object}          a new object that is the union of all
+ * provided objects
+ * @function mergeOptions
+ */
+export default function mergeOptions() {
+  // contruct the call dynamically to handle the variable number of
+  // objects to merge
+  let args = Array.prototype.slice.call(arguments);
 
-      if (!isPlain(result[key])) {
-        result[key] = {};
-      }
+  // unshift an empty object into the front of the call as the target
+  // of the merge
+  args.unshift({});
 
-      result[key] = mergeOptions(result[key], value);
-    });
-  });
+  // customize conflict resolution to match our historical merge behavior
+  args.push(customizer);
 
-  return result;
+  merge.apply(null, args);
+
+  // return the mutated result object
+  return args[0];
 }
