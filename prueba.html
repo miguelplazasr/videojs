@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- Load dependent stylesheets. -->
+    <link href="./bower_components/video.js/dist/video-js.css" rel="stylesheet">
+    <link rel="stylesheet" href="./bower_components/videojs-contrib-ads/src/videojs.ads.css" />
+    <link rel="stylesheet" href="./bower_components/videojs-ima/src/videojs.ima.css" />
+</head>
+
+<body>
+<video id="content_video" class="video-js vjs-default-skin"
+       controls preload="auto" width="YOUR_VIDEO_WIDTH" height="YOUR_VIDEO_HEIGHT">
+    <source src="https://player.vimeo.com/external/176334517.sd.mp4?s=fc3e768314e62f7a434c8ede7852a58d711f1c00&profile_id=164&oauth2_token_id=905013367" type="video/mp4" />
+</video>
+<!-- Load dependent scripts -->
+<script src="./bower_components/video.js/dist/video.js"></script>
+<script src="//imasdk.googleapis.com/js/sdkloader/ima3.js"></script>
+<script src="./bower_components/videojs-contrib-ads/src/videojs.ads.js"></script>
+<script src="./bower_components/videojs-ima/src/videojs.ima.js"></script>
+<script>
+
+    var player = videojs('content_video');
+
+    var options = {
+        id: 'content_video',
+        adTagUrl: 'https://pubads.g.doubleclick.net/gampad/ads?sz=400x300|640x480&iu=/62207337/CIMAPLAY/pulzo_demo&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&url=[referrer_url]&description_url=[description_url]&correlator=[timestamp]'
+    };
+
+    // This must be called before player.play() below.
+    player.ima(options);
+    player.ima.requestAds();
+    // On mobile devices, you must call initializeAdDisplayContainer as the result
+    // of a user action (e.g. button click). If you do not make this call, the SDK
+    // will make it for you, but not as the result of a user action. For more info
+    // see our examples, all of which are set up to work on mobile devices.
+    // player.ima.initializeAdDisplayContainer();
+
+    // This must be called after player.ima(...) above.
+    player.play();
+
+</script>
+</body>
+</html>
