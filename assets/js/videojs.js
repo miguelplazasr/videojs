@@ -4,6 +4,8 @@
 
 (function () {
 
+    var validategal = false;
+
     /* crea la variable head que trae el HEAD del DOM */
     var head = document.getElementsByTagName('head')[0];
 
@@ -27,9 +29,9 @@
 
     for (var i = 0; i < videos.length; i++) {
 
-        //if (videos[i].classList.contains("create"))
-        //    return false;
-        //else {
+        if (videos[i].classList.contains("create"))
+            return false;
+        else {
             videos[i].classList.add("create");
 
             var container = videos[i];
@@ -37,9 +39,9 @@
             var id_player = 'player_' + id_elem;
             var id_iframe = 'iframe_' + id_elem;
 
-            videoAuthorized(container.id);
-            //loadJSON(id_elem, id_player, id_iframe);
-        //}
+            videoAuthorized(container.id, id_player);
+            //loadJSON(id_elem, id_player, id_iframe, id_iframe);
+        }
     }
 
 
@@ -49,11 +51,11 @@
      * 
      * @param video_id
      */
-    function videoAuthorized(video_id) {
+    function videoAuthorized(video_id, player, iframe) {
 
         console.log(document.domain);
 
-        var url = "http://localhost:8000/video-data/" + video_id + '?domain=' + document.domain;
+        var url_check = "http://localhost:8000/app_dev.php/video-data/" + video_id + '?domain=' + document.domain;
 
         var http_req = new XMLHttpRequest();
 
@@ -69,9 +71,20 @@
 
                 else if (data.video) {
                     var pixelTracking = document.createElement("img");
-                    pixelTracking.setAttribute("src", "http://localhost:8000/video-print/" + video_id + "?vid=" + data.video + "&ccid=" + data.ccid + "&pid=" + data.pid + "&domain=" + document.domain);
+                    pixelTracking.setAttribute("src", "http://localhost:8000/app_dev.php/video-print/" + video_id + "?vid=" + data.video + "&ccid=" + data.ccid + "&pid=" + data.pid + "&domain=" + document.domain);
                     pixelTracking.style.display = 'none';
                     _container.appendChild(pixelTracking);
+
+                    var wWidget = window.innerWidth;
+                    if(validategal){
+                        if(wWidget<720){
+                            valp = "95%"
+                        }else{
+                            valp = "75%"
+                        }
+                    }else{
+                        valp = "56%"
+                    }
 
                     /* Crea un div para insertar la etiqueta video */
                     var _player = document.createElement("div");
@@ -80,27 +93,53 @@
                     _player.style.maxWidth = data.width + "px";
                     _player.style.Margin = "0 auto";
 
-                    /* Inserta la etiqueta video */
+                    var _id = document.createElement("div");
+                    _id.className = player;
+                    _id.style.position = "relative";
+                    _id.style.paddingBottom = valp;
+                    _id.style.paddingTop = "0";
+                    _id.style.height = "0";
+
+                    /* Inserta la etiqueta video *
                     var _video = document.createElement("video");
                     _video.id = "video-" + video_id;
                     _video.className = "video-js vjs-fluid";
                     _video.setAttribute('data-setup', '{"controls": true}');
-
-                    _player.appendChild(_video);
-                    _container.appendChild(_player);
+                    */
 
 
                     /* Traemos los datos del video */
+                    var w = (parseInt(data.width) + 35);
+                    var h = (parseInt(data.height) + 35);
                     var url = 'http://localhost:8000/app_dev.php/video-js/' + data.video + '?pvidt=' + id_elem + '&h=' + data.height + '&w=' + data.width + '&ccid=' + data.ccid + '&pid=' + data.pid + '&adv=' + data.advertiser + '&qty=' + data.qty + '&domain=' + document.domain + '?v2';
+                    //var url = 'http://www.bluradio.com/';
 
 
-                    video_request.open("GET", url, true);
-                    video_request.send();
+                    var iFrame = document.createElement("iframe");
+                    iFrame.setAttribute("id", iframe);
+                    iFrame.setAttribute("frameborder", "0");
+                    iFrame.setAttribute("allowfullscreen", "allowfullscreen");
+                    iFrame.setAttribute("src", url);
+                    iFrame.style.position = "absolute";
+                    iFrame.style.top = "0";
+                    iFrame.style.left = "0";
+                    iFrame.style.width = "100%";
+                    iFrame.style.height = "100%";
+
+                    _id.appendChild(iFrame);
+                    _player.appendChild(_id);
+                    _container.appendChild(_player);
+
+
+
+                    //video_request.open("GET", url, true); *1
+                    //video_request.send(); *1
 
                 }
             }
         };
 
+        /* 1* Se comentarea para hacer la prueba del iframe ya que la carga de los js por javascript no se hace de la manera correcta.
         var video_request = new XMLHttpRequest();
 
         video_request.onreadystatechange = function () {
@@ -122,7 +161,9 @@
             }
         } ;
 
-        http_req.open("GET", url, true);
+        */
+
+        http_req.open("GET", url_check, true);
         http_req.send();
         
     }
