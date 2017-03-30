@@ -15,25 +15,27 @@
     /* Adiciona los css de videoJs al HEAD del documento */
     var cssvideojs = document.createElement('link');
     cssvideojs.rel = 'stylesheet';
-    cssvideojs.href = './bower_components/video.js/dist/video-js.css';
+    //cssvideojs.href = './node_modules/video.js/dist/video-js.css';
+    cssvideojs.href = '//vjs.zencdn.net/5.19.0/video-js.css';
     head.appendChild(cssvideojs);
 
     var cssvideojsads = document.createElement('link');
     cssvideojsads.rel = 'stylesheet';
-    cssvideojsads.href = './bower_components/videojs-contrib-ads/src/videojs.ads.css';
+    cssvideojsads.href = './node_modules/videojs-contrib-ads/src/videojs.ads.css';
     head.appendChild(cssvideojsads);
 
     var cssvideojsima = document.createElement('link');
     cssvideojsima.rel = 'stylesheet';
-    cssvideojsima.href = './bower_components/videojs-ima/src/videojs.ima.css';
+    cssvideojsima.href = './node_modules/videojs-ima/src/videojs.ima.css';
     head.appendChild(cssvideojsima);
 
     /* Adiciona los js de videoJs al HEAD del documento */
     var jsvideojs = document.createElement('script');
     jsvideojs.type = 'text/javascript';
-    jsvideojs.src = './bower_components/video.js/dist/video.js';
-    //jsvideojs.src = location.protocol + //vjs.zencdn.net/ie8/1.1.2/videojs-ie8.min.js';
+    //jsvideojs.src = './node_modules/video.js/dist/video.js';
+    jsvideojs.src =  'http://vjs.zencdn.net/5.19.0/video.js';
     document.body.appendChild(jsvideojs);
+
 
     var videos = document.getElementsByClassName("video-cimacast");
 
@@ -77,6 +79,24 @@
                 }
 
                 else if (data.video) {
+
+
+                    var ima3 = document.createElement('script');
+                    ima3.type = 'text/javascript';
+                    ima3.src = '//imasdk.googleapis.com/js/sdkloader/ima3.js';
+                    document.body.appendChild(ima3);
+
+                    var jsvideojsads = document.createElement('script');
+                    jsvideojsads.type = 'text/javascript';
+                    jsvideojsads.src = './node_modules/videojs-contrib-ads/src/videojs.ads.js';
+                    document.body.appendChild(jsvideojsads);
+
+                    var jsvideojsima = document.createElement('script');
+                    jsvideojsima.type = 'text/javascript';
+                    jsvideojsima.src = './node_modules/videojs-ima/src/videojs.ima.js';
+                    document.body.appendChild(jsvideojsima);
+
+
                     var pixelTracking = document.createElement("img");
                     pixelTracking.setAttribute("src", base_url + "/app_dev.php/video-print/" + video_id + "?vid=" + data.video + "&ccid=" + data.ccid + "&pid=" + data.pid + "&domain=" + document.domain);
                     pixelTracking.style.display = 'none';
@@ -118,34 +138,60 @@
 
             if(video_request.readyState == 4 ) {
 
+
+
+
                 var data = JSON.parse(video_request.responseText);
-
-
-
-                var ima3 = document.createElement('script');
-                ima3.type = 'text/javascript';
-                ima3.src = '//imasdk.googleapis.com/js/sdkloader/ima3.js';
-                document.body.appendChild(ima3);
-
-                var jsvideojsads = document.createElement('script');
-                jsvideojsads.type = 'text/javascript';
-                jsvideojsads.src = './bower_components/videojs-contrib-ads/src/videojs.ads.js';
-                document.body.appendChild(jsvideojsads);
-
-                var jsvideojsima = document.createElement('script');
-                jsvideojsima.type = 'text/javascript';
-                jsvideojsima.src = './bower_components/videojs-ima/src/videojs.ima.js';
-                document.body.appendChild(jsvideojsima);
 
 
                 var _video_player  = document.getElementsByTagName('video');
 
-                console.log(_video_player);
                 _video_player[0].setAttribute("src", data.video);
+                _video_player[0].setAttribute("type", "video/mp4");
 
-                console.log(data);
 
-                videojsPlayerAds(data);
+                //videojsPlayerAds(data);
+
+                var player = videojs(_video_player[0].id);
+
+                var options = {
+                    id: _video_player[0].id,
+                    adTagUrl: 'https://pubads.g.doubleclick.net/gampad/ads?sz=400x300|640x480&iu=/62207337/CIMAPLAY/pulzo_demo&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&url=[referrer_url]&description_url=[description_url]&correlator=[timestamp]'
+
+//        adTagUrl: '{{ urlAds }}'
+                };
+
+
+                player.ima(options);
+
+
+                console.log(_video_player[0].id + '_html5_api');
+
+                // Remove controls from the player on iPad to stop native controls from stealing
+                // our click
+                var contentPlayer =  document.getElementById(_video_player[0].id + '_html5_api');
+
+                if ((navigator.userAgent.match(/iPad/i) ||
+                    navigator.userAgent.match(/Android/i)) &&
+                    contentPlayer.hasAttribute('controls')) {
+                    contentPlayer.removeAttribute('controls');
+                }
+
+                // Initialize the ad container when the video player is clicked, but only the
+                // first time it's clicked.
+                var startEvent = 'click';
+                if (navigator.userAgent.match(/iPhone/i) ||
+                    navigator.userAgent.match(/iPad/i) ||
+                    navigator.userAgent.match(/Android/i)) {
+                    startEvent = 'touchend';
+                }
+
+                player.one(startEvent, function() {
+                    player.ima.initializeAdDisplayContainer();
+                    player.ima.requestAds();
+                    player.play();
+                });
+
 
             }
         } ;
@@ -155,7 +201,7 @@
         
     }
 
-
+/*
     function videojsPlayerAds(data ) {
 
 
@@ -203,6 +249,6 @@
 
 
     }
-
+*/
 
 })();
